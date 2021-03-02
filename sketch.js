@@ -11,7 +11,7 @@ var obstaclesGroup, obstacle1, obstacle2, obstacle3, obstacle4, obstacle5, obsta
 var score=0;
 
 var gameOver, restart;
-
+var jumpSound , checkPointSound, dieSound;
 
 
 function preload(){
@@ -31,10 +31,14 @@ function preload(){
   
   gameOverImg = loadImage("gameOver.png");
   restartImg = loadImage("restart.png");
+  
+  jumpSound = loadSound("jump.mp3");
+  dieSound = loadSound("die.mp3");
+  checkPointSound = loadSound("checkPoint.mp3");
 }
 
 function setup() {
-  createCanvas(600, 200);
+  createCanvas(windowWidth,windowHeight);
   
   trex = createSprite(50,180,20,50);
   
@@ -70,15 +74,18 @@ function setup() {
 
 function draw() {
   //trex.debug = true;
-  background((rgb(100,200,250)));
+  background(255);
   text("Score: "+ score, 500,50);
   
   if (gameState===PLAY){
     score = score + Math.round(getFrameRate()/60);
     ground.velocityX = -(6 + 3*score/100);
-  
+    //change the trex animation
+    trex.changeAnimation("running", trex_running);
+    
     if(keyDown("space") && trex.y >= 159) {
       trex.velocityY = -12;
+      jumpSound.play();
     }
   
     trex.velocityY = trex.velocityY + 0.8
@@ -92,7 +99,8 @@ function draw() {
     spawnObstacles();
   
     if(obstaclesGroup.isTouching(trex)){
-        gameState = END;
+      gameState = END;
+      dieSound.play();
     }
   }
   else if (gameState === END) {
@@ -112,13 +120,25 @@ function draw() {
     obstaclesGroup.setLifetimeEach(-1);
     cloudsGroup.setLifetimeEach(-1);
     
-    if(mousePressedOver(restart)) {
-      reset();
-    }
+    
+  }
+  if(mousePressedOver(restart))
+  { 
+    reset();
   }
   
-  
   drawSprites();
+}
+
+function reset(){
+ gameState=PLAY; 
+gameOver.visible = false;
+ restart.visible = false;
+trex.changeAnimation("running",trex_running);
+  obstaclesGroup.destroyEach();
+  cloudsGroup.destroyEach();
+ score=0;
+
 }
 
 function spawnClouds() {
@@ -142,6 +162,8 @@ function spawnClouds() {
   }
   
 }
+
+
 
 function spawnObstacles() {
   if(frameCount % 60 === 0) {
@@ -175,18 +197,3 @@ function spawnObstacles() {
   }
 }
 
-function reset(){
-  gameState = PLAY;
-  gameOver.visible = false;
-  restart.visible = false;
-  
-  obstaclesGroup.destroyEach();
-  cloudsGroup.destroyEach();
-  
-  trex.changeAnimation("running",trex_running);
-  
- 
-  
-  score = 0;
-  
-}
